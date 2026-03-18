@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Cool Tuner</string>
+
+    <string name="mode_chromatic">Хроматический</string>
+    <string name="mode_presets">Готовые строи</string>
+    <string name="status_listening">Слушаю...</string>
+
+    <string name="btn_tap">НАСТУЧИ\nТЕМП</string>
+    <string name="btn_start">СТАРТ</string>
+    <string name="btn_stop">СТОП</string>
+    <string name="title_select_signature">Выберите размер</string>
+</resources>
