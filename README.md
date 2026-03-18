@@ -1,13 +1,14 @@
-# Strings — Guitar Tuner & Metronome 
+# Strings — Guitar Tuner & Metronome
 
-**Strings** is a minimalist, accurate, and modern guitar tuner app for Android, designed for musicians who value simplicity, reliability, and style. Version 1.1 brings a complete UI overhaul and personalized settings.
+**Strings** is a minimalist, accurate, and modern guitar tuner app for Android, designed for musicians who value simplicity, reliability, and style. Version 1.2 focuses on rock-solid stability, refined animations, and high-performance audio analysis.
 
 ##  Features
 
 ###  Precision Tuning
 * **Chromatic Mode:** High-accuracy real-time frequency analysis using FFT (Fast Fourier Transform).
-* **Instrument Presets (New v1.1):** Quick tuning for 6/7-string guitars, 4/5-string basses, Drop D, and Drop C.
-* **Visual Feedback:** Intuitive scale and dynamic background colors that change when you hit the perfect note.
+* **Instrument Presets:** Quick tuning for 6/7-string guitars, 4/5-string basses, Drop D, and Drop C.
+* **Visual Perfection (Updated v1.2):** Re-engineered background color transitions using synchronized `ValueAnimator` for a seamless "Perfect Pitch" experience.
+* **Haptic Feedback:** Subtle vibration when you hit the exact frequency.
 
 ###  Advanced Metronome
 * **Adjustable Tempo:** Supports a wide range from 30 to 250 BPM.
@@ -16,13 +17,14 @@
 * **Time Signatures:** Support for 2/4, 3/4, 4/4, 6/8, and more.
 * **Visual Pulse:** Animated scale and flash accents to keep you on the beat.
 
-###  Personalization & UX (New v1.1)
+###  Personalization & UX (Updated v1.2)
+* **Stable Navigation:** Fixed UI state leaks when switching between Tuner and Metronome modes.
 * **Theme Support:** Choose between **Light**, **Dark**, or **System** default modes.
 * **Material 3:** Fully compliant with Google's latest design system, including dynamic colors.
-* **Smooth Navigation:** Fluid "Fade & Scale" transitions between screens.
+* **Smooth Transitions:** Fluid "Fade & Scale" animations between layouts.
 * **Bilingual:** Full support for English and Russian languages.
 
-## 🛠 Tech Stack
+##  Tech Stack
 * **Language:** [Kotlin](https://kotlinlang.org/)
 * **UI:** Android XML with **Material Design 3**
 * **Audio Processing:** AudioRecord API & FFT Analysis
@@ -38,12 +40,12 @@
 
 ##  Installation
 1. Go to the [Releases](https://github.com/eduashi/Strings/releases) section.
-2. Download the latest `Strings_v1.1.apk`.
+2. Download the latest `Strings_v1.2.apk`.
 3. Install it on your Android device (ensure "Install from unknown sources" is enabled).
 
-## 👨‍💻 Author
+##  Author
 Developed by **eduashi**.  
-This project is a result of an evolving Android development journey, moving from basic logic to a polished, feature-rich utility.
+This project is an evolving Android development journey, moving from basic logic to a polished, professional-grade utility.
 
 ---
 *Tune your strings, keep your beat.*
