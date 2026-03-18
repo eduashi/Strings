@@ -1,12 +1,41 @@
 <resources>
-    <string name="app_name">Cool Tuner</string>
+    <string name="app_name">Strings</string>
 
     <string name="mode_chromatic">Хроматический</string>
     <string name="mode_presets">Готовые строи</string>
-    <string name="status_listening">Слушаю...</string>
+    <string name="status_listening">Слушаю…</string>
 
     <string name="btn_tap">НАСТУЧИ\nТЕМП</string>
     <string name="btn_start">СТАРТ</string>
     <string name="btn_stop">СТОП</string>
+
     <string name="title_select_signature">Выберите размер</string>
+    <string name="title_select_tuning">Выберите строй</string>
+    <string name="metronome_title">Метроном</string>
+    <string name="tuner_title">Тюнер</string>
+    <string name="settings_title">Настройки</string>
+    <string name="pitch_detected">Частота: %s Гц</string>
+    <string name="too_low">Низко</string>
+    <string name="too_high">Высоко</string>
+    <string name="perfect">В точку!</string>
+
+    <string name="tuning_guitar_6">Гитара 6-струнная (Standard)</string>
+    <string name="tuning_guitar_7">Гитара 7-струнная (Standard)</string>
+    <string name="tuning_bass_4">Бас 4-струнный (Standard)</string>
+    <string name="tuning_bass_5">Бас 5-струнный (Standard)</string>
+    <string name="tuning_drop_d">Drop D</string>
+    <string name="tuning_drop_c">Drop C</string>
+    <string name="tuning_drop_a">Drop A</string>
+    <string name="tuning_drop_g">Drop G</string>
+
+    <string name="status_tuning_selected">Настройка: %s</string>
+    <string name="string_number">СТРУНА %d</string>
+
+    <string name="theme_title">Тема оформления</string>
+    <string name="theme_light">Светлая</string>
+    <string name="theme_dark">Темная</string>
+    <string name="theme_system">Системная</string>
+    <string name="about_title">О приложении</string>
+    <string name="menu_settings">Настройки</string>
+    <string name="about_message">Strings — Тюнер и Метроном  Версия: %s Разработано с любовью для гитаристов.</string>
 </resources>

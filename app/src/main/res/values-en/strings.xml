@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Strings</string>
+    <string name="mode_chromatic">Chromatic</string>
+    <string name="mode_presets">Tunings</string>
+    <string name="status_listening">Listening...</string>
+    <string name="btn_tap">TAP</string>
+    <string name="btn_start">START</string>
+    <string name="btn_stop">STOP</string>
+    <string name="title_select_signature">Select signature</string>
+    <string name="title_select_tuning">Select Tuning</string>
+    <string name="metronome_title">Metronome</string>
+    <string name="tuner_title">Tuner</string>
+    <string name="settings_title">Settings</string>
+    <string name="pitch_detected">Pitch: %s Hz</string>
+    <string name="too_low">Too Low</string>
+    <string name="too_high">Too High</string>
+    <string name="perfect">Perfect!</string>
+    <string name="tuning_guitar_6">6-String Guitar (Standard)</string>
+    <string name="tuning_guitar_7">7-String Guitar (Standard)</string>
+    <string name="tuning_bass_4">4-String Bass (Standard)</string>
+    <string name="tuning_bass_5">5-String Bass (Standard)</string>
+    <string name="tuning_drop_d">Drop D</string>
+    <string name="tuning_drop_c">Drop C</string>
+    <string name="tuning_drop_a">Drop A</string>
+    <string name="tuning_drop_g">Drop G</string>
+    <string name="status_tuning_selected">Tuning: %s</string>
+    <string name="string_number">STR %d</string>
+    <string name="theme_title">Design theme</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_system">System</string>
+    <string name="about_title">About app</string>
+    <string name="menu_settings">Settings</string>
+    <string name="about_message">Strings — Tuner &amp; Metronome  Version: %s Made with love for guitarists.</string>
+</resources>

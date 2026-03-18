@@ -2,32 +2,30 @@ package com.eduashi.strings
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Bundle
+import android.graphics.Color
+import android.os.*
+import android.view.HapticFeedbackConstants
+import android.view.MotionEvent
 import android.view.View
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.app.ActivityCompat
 import androidx.core.view.isVisible
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.chip.Chip
-import com.google.android.material.chip.ChipGroup
-import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.eduashi.strings.databinding.ActivityMainBinding
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.color.MaterialColors
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlin.math.*
+import androidx.core.graphics.toColorInt
+import androidx.core.content.edit
 
 class MainActivity : AppCompatActivity() {
 
-    // UI элементы
-    private lateinit var noteText: TextView
-    private lateinit var statusText: TextView
-    private lateinit var rootLayout: View
-    private lateinit var tunerScale: TunerScaleView
+    private lateinit var binding: ActivityMainBinding
     private lateinit var metronomeController: MetronomeController
 
-    // Состояние
     private var analyzer: AudioAnalyzer? = null
     private var currentTuning: InstrumentTuning? = null
     private val noteNames = arrayOf("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B")
@@ -35,31 +33,40 @@ class MainActivity : AppCompatActivity() {
     private val historySize = 15
     private var hasVibrated = false
 
-    // Для авто-изменения BPM
-    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val handler = Handler(Looper.getMainLooper())
     private var isAutoChanging = false
     private var autoStepRunnable: Runnable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // 1. Применяем тему ПЕРЕД установкой контента
+        val prefs = getSharedPreferences("settings", Context.MODE_PRIVATE)
+        val savedMode = prefs.getInt("theme_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        AppCompatDelegate.setDefaultNightMode(savedMode)
+
+        binding = ActivityMainBinding.inflate(layoutInflater)
         DynamicColors.applyToActivitiesIfAvailable(this.application)
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(binding.root)
 
-        initViews()
+        // 2. Инициализация всех систем
+        setupUI()
         setupMetronome()
         setupNavigation()
+        setupSettings()
         checkAudioPermission()
+
+        // 3. ФИКС: Восстанавливаем экран после перезагрузки темы
+        // post гарантирует, что код выполнится, когда меню уже восстановило нажатую кнопку
+        binding.root.post {
+            restoreScreenState()
+        }
     }
 
-    private fun initViews() {
-        noteText = findViewById(R.id.noteText)
-        statusText = findViewById(R.id.statusText)
-        rootLayout = findViewById(R.id.rootLayout)
-        tunerScale = findViewById(R.id.tunerScale)
+    private fun setupUI() {
+        // Обработка кликов через binding
+        binding.chipPresets.setOnClickListener { showPresetsDialog() }
 
-        findViewById<Chip>(R.id.chipPresets).setOnClickListener { showPresetsDialog() }
-
-        findViewById<ChipGroup>(R.id.modeChipGroup).setOnCheckedStateChangeListener { _, checkedIds ->
+        binding.modeChipGroup.setOnCheckedStateChangeListener { _, checkedIds ->
             if (checkedIds.contains(R.id.chipChromatic)) resetToChromatic()
         }
     }
@@ -67,22 +74,22 @@ class MainActivity : AppCompatActivity() {
     private fun resetToChromatic() {
         pitchHistory.clear()
         currentTuning = null
-        statusText.text = "Хроматический режим"
-        rootLayout.animateBackgroundColor(MaterialColors.getColor(rootLayout, com.google.android.material.R.attr.colorSurface))
+        binding.statusText.text = getString(R.string.mode_chromatic)
+        binding.rootLayout.animateBackgroundColor(
+            MaterialColors.getColor(binding.rootLayout, com.google.android.material.R.attr.colorSurface)
+        )
     }
 
     private fun setupMetronome() {
         metronomeController = MetronomeController(
             onBpmChanged = { newBpm ->
-                val tv = findViewById<TextView>(R.id.bpmText)
-                tv?.text = newBpm.toString()
-                tv?.bounce() // Используем расширение из ViewExtensions
+                binding.bpmText.text = newBpm.toString()
+                binding.bpmText.bounce()
             },
             onTick = { beat ->
                 runOnUiThread {
-                    val scale = findViewById<TunerScaleView>(R.id.metronomeScale)
-                    scale?.animateTick(if (beat % 2 != 0) 100f else -100f)
-                    scale?.flashAccent(beat == 1)
+                    binding.metronomeScale.animateTick(if (beat % 2 != 0) 100f else -100f)
+                    binding.metronomeScale.flashAccent(beat == 1)
                 }
             }
         )
@@ -90,25 +97,34 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupNavigation() {
-        val tunerGroup = findViewById<View>(R.id.tunerGroup)
-        val metronomeGroup = findViewById<View>(R.id.metronomeLayout)
-        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
-
-        bottomNav.setOnItemSelectedListener { item ->
-            rootLayout.animateBackgroundColor(MaterialColors.getColor(rootLayout, com.google.android.material.R.attr.colorSurface))
-            noteText.text = ""
+        binding.bottomNavigation.setOnItemSelectedListener { item ->
+            // Сбрасываем фон и текст ноты при переключении
+            binding.rootLayout.animateBackgroundColor(
+                MaterialColors.getColor(binding.rootLayout, com.google.android.material.R.attr.colorSurface)
+            )
+            binding.noteText.text = ""
 
             when (item.itemId) {
                 R.id.nav_tuner -> {
-                    switchLayout(tunerGroup, metronomeGroup)
+                    // Показываем тюнер, скрываем метроном и настройки
+                    switchLayout(binding.tunerGroup, listOf(binding.metronomeLayout, binding.settingsLayout))
                     metronomeController.stop()
                     updateMetronomeUI()
                     startTuning()
                     true
                 }
                 R.id.nav_metronome -> {
-                    switchLayout(metronomeGroup, tunerGroup)
+                    // Показываем метроном, скрываем тюнер и настройки
+                    switchLayout(binding.metronomeLayout, listOf(binding.tunerGroup, binding.settingsLayout))
                     analyzer?.stop()
+                    true
+                }
+                R.id.nav_settings -> {
+                    // Показываем настройки, скрываем тюнер и метроном
+                    switchLayout(binding.settingsLayout, listOf(binding.tunerGroup, binding.metronomeLayout))
+                    analyzer?.stop()
+                    metronomeController.stop()
+                    updateMetronomeUI()
                     true
                 }
                 else -> false
@@ -116,76 +132,114 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun switchLayout(toShow: View, toHide: View) {
+    private fun switchLayout(toShow: View, toHide: List<View>) {
         if (toShow.isVisible) return
-        toShow.apply { visibility = View.VISIBLE; alpha = 0f; animate().alpha(1f).setDuration(300) }
-        toHide.animate().alpha(0f).setDuration(300).withEndAction { toHide.visibility = View.GONE }
+
+        // 1. Прячем старые экраны с анимацией ухода (Fade out + Scale down)
+        toHide.forEach { view ->
+            if (view.isVisible) {
+                view.animate()
+                    .alpha(0f)
+                    .scaleX(0.95f)
+                    .scaleY(0.95f)
+                    .setDuration(150)
+                    .withEndAction {
+                        view.isVisible = false
+                    }
+            }
+        }
+
+        // 2. Показываем новый экран (Fade in + Scale up)
+        toShow.apply {
+            alpha = 0f
+            scaleX = 0.95f
+            scaleY = 0.95f
+            isVisible = true
+            animate()
+                .alpha(1f)
+                .scaleX(1f)
+                .scaleY(1f)
+                .setDuration(300)
+                .setStartDelay(100) // Небольшая пауза, чтобы старый экран успел начать исчезать
+                .start()
+        }
     }
 
     private fun updateMetronomeUI() {
-        val btn = findViewById<MaterialButton>(R.id.btnStartStop) ?: return
         val isRunning = metronomeController.isRunning()
 
-        if (isRunning) btn.startPulse() else btn.stopPulse()
-
-        btn.text = getString(if (isRunning) R.string.btn_stop else R.string.btn_start)
-        btn.setIconResource(if (isRunning) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play)
+        with(binding.btnStartStop) {
+            if (isRunning) startPulse() else stopPulse()
+            text = getString(if (isRunning) R.string.btn_stop else R.string.btn_start)
+            setIconResource(if (isRunning) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play)
+        }
     }
 
     @SuppressLint("ClickableViewAccessibility")
     private fun setupMetronomeButtons() {
-        findViewById<View>(R.id.btnPlus).apply {
+        binding.btnPlus.apply {
             setOnClickListener { if (!isAutoChanging) metronomeController.bpm += 1 }
-            setOnTouchListener { _, e -> handleAuto(e, 10); false }
+            setOnTouchListener { _, e -> handleAuto(e, 1); false } // Шаг 1 для авто
         }
-        findViewById<View>(R.id.btnMinus).apply {
+        binding.btnMinus.apply {
             setOnClickListener { if (!isAutoChanging) metronomeController.bpm -= 1 }
-            setOnTouchListener { _, e -> handleAuto(e, -10); false }
+            setOnTouchListener { _, e -> handleAuto(e, -1); false }
         }
-        findViewById<View>(R.id.btnStartStop).setOnClickListener {
-            metronomeController.toggle(); updateMetronomeUI()
+        binding.btnStartStop.setOnClickListener {
+            metronomeController.toggle()
+            updateMetronomeUI()
         }
-        findViewById<View>(R.id.btnTap).setOnClickListener { metronomeController.handleTap() }
-        findViewById<View>(R.id.btnTimeSignature).setOnClickListener { showTimeSignatureDialog() }
+        binding.btnTap.setOnClickListener { metronomeController.handleTap() }
+        binding.btnTimeSignature.setOnClickListener { showTimeSignatureDialog() }
     }
 
-    private fun handleAuto(event: android.view.MotionEvent, step: Int) {
+    private fun handleAuto(event: MotionEvent, step: Int) {
         when (event.action) {
-            android.view.MotionEvent.ACTION_DOWN -> {
-                isAutoChanging = false
+            MotionEvent.ACTION_DOWN -> {
                 autoStepRunnable = object : Runnable {
                     override fun run() {
-                        metronomeController.bpm += step
-                        findViewById<View>(R.id.bpmText)?.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
-                        handler.postDelayed(this, 150)
+                        isAutoChanging = true
+                        // Увеличиваем шаг до 10 для долгого нажатия
+                        val bigStep = step * 10
+                        metronomeController.bpm += bigStep
+
+                        // Виброотклик для тактильного ощущения "прыжка"
+                        binding.bpmText.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+
+                        // Повторяем каждые 350 мс
+                        handler.postDelayed(this, 300)
                     }
                 }
+                // Задержка перед началом авто-повтора (500 мс)
                 handler.postDelayed(autoStepRunnable!!, 500)
             }
-            android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 autoStepRunnable?.let { handler.removeCallbacks(it) }
                 autoStepRunnable = null
-                isAutoChanging = false
+                // Небольшая задержка, чтобы обычный клик не считался за "авто"
+                handler.postDelayed({ isAutoChanging = false }, 50)
             }
         }
     }
 
-    // --- Логика тюнера (упрощенная за счет выноса анимаций) ---
     private fun processFrequencyWithSmoothing(hz: Float) {
         if (hz <= 25f || hz > 1000f) return
-        pitchHistory.add(hz); if (pitchHistory.size > historySize) pitchHistory.removeAt(0)
+        pitchHistory.add(hz)
+        if (pitchHistory.size > historySize) pitchHistory.removeAt(0)
+
         val avgHz = pitchHistory.average().toFloat()
         val n = (12 * log2(avgHz / 440.0) + 69).toFloat()
 
         if (currentTuning == null) {
-            val idx = n.roundToInt(); val cents = (n - idx) * 100
-            tunerScale.setCents(cents)
+            val idx = n.roundToInt()
+            val cents = (n - idx) * 100
+            binding.tunerScale.setCents(cents)
             updateUI(cents, avgHz, idx)
         } else {
             val target = currentTuning!!.notes.minByOrNull { abs(it - n) } ?: n.roundToInt()
-            if (abs(n - target) < 1.5f) {
+            if (abs(n - target) < 2.0f) {
                 val cents = (n - target) * 100
-                tunerScale.setCents(cents)
+                binding.tunerScale.setCents(cents)
                 updatePresetUI(cents, avgHz, target)
             }
         }
@@ -193,81 +247,183 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("SetTextI18n")
     private fun updateUI(cents: Float, hz: Float, idx: Int) {
-        noteText.text = "${noteNames[((idx % 12) + 12) % 12]}${idx / 12 - 1}"
+        binding.noteText.text = "${noteNames[((idx % 12) + 12) % 12]}${idx / 12 - 1}"
+
         if (abs(cents) < 8) {
             if (!hasVibrated) { triggerVibe(); hasVibrated = true }
-            rootLayout.animateBackgroundColor(resources.getColor(android.R.color.holo_green_dark, null))
-            noteText.setTextColor(android.graphics.Color.WHITE)
-            statusText.text = "PERFECT"
+            binding.rootLayout.animateBackgroundColor("#2E7D32".toColorInt()) // Dark Green
+            binding.noteText.setTextColor(Color.WHITE)
+            binding.statusText.text = getString(R.string.perfect)
         } else {
             hasVibrated = false
-            rootLayout.animateBackgroundColor(MaterialColors.getColor(rootLayout, com.google.android.material.R.attr.colorSurface))
-            noteText.setTextColor(MaterialColors.getColor(noteText, com.google.android.material.R.attr.colorPrimary))
-            statusText.text = "%.1f Hz".format(hz)
+            binding.rootLayout.animateBackgroundColor(
+                MaterialColors.getColor(binding.rootLayout, com.google.android.material.R.attr.colorSurface)
+            )
+            binding.noteText.setTextColor(MaterialColors.getColor(binding.noteText, com.google.android.material.R.attr.colorPrimary))
+            binding.statusText.text = getString(R.string.pitch_detected, "%.1f".format(hz))
         }
     }
 
     @SuppressLint("SetTextI18n")
     private fun updatePresetUI(cents: Float, hz: Float, target: Int) {
         val tuning = currentTuning ?: return
+
+        // 1. Вычисляем номер струны. Если не нашли — 0 (для безопасности форматтера %d)
         val strIdx = tuning.notes.indexOf(target)
-        val strNum = if (strIdx != -1) tuning.notes.size - strIdx else "?"
-        noteText.text = "${noteNames[((target % 12) + 12) % 12]}${target / 12 - 1}"
+        val strNum = if (strIdx != -1) (tuning.notes.size - strIdx) else 0
+
+        // 2. Отображаем ноту
+        binding.noteText.text = "${noteNames[((target % 12) + 12) % 12]}${target / 12 - 1}"
 
         if (abs(cents) < 8) {
+            // ИДЕАЛЬНО
             if (!hasVibrated) { triggerVibe(); hasVibrated = true }
-            rootLayout.animateBackgroundColor(resources.getColor(android.R.color.holo_green_dark, null))
-            statusText.text = "СТРУНА $strNum: ИДЕАЛЬНО"
+            binding.rootLayout.animateBackgroundColor("#2E7D32".toColorInt())
+
+            // Используем getString с аргументами. В strings.xml должно быть что-то вроде:
+            // "STR %1$d: %2$s"
+            binding.statusText.text = getString(R.string.string_number, strNum) + ": " + getString(R.string.perfect)
+
         } else {
+            // НЕ В ТОНЕ
             hasVibrated = false
-            rootLayout.animateBackgroundColor(MaterialColors.getColor(rootLayout, com.google.android.material.R.attr.colorSurface))
-            statusText.text = "СТРУНА $strNum: ${if (cents > 0) "ОСЛАБЬ ↓" else "НАТЯНИ ↑"}\n%.1f Hz".format(hz)
+            binding.rootLayout.animateBackgroundColor(
+                MaterialColors.getColor(binding.rootLayout, com.google.android.material.R.attr.colorSurface)
+            )
+
+            val direction = if (cents > 0) getString(R.string.too_high) else getString(R.string.too_low)
+
+            // Собираем финальную строку без хардкода "STR" и "\n"
+            // Рекомендую в strings.xml сделать ключ:
+            // <string name="tuning_status_error">STR %1$d: %2$s\n%3$.1f Hz</string>
+            val pitchInfo = "%.1f Hz".format(hz)
+            binding.statusText.text = "${getString(R.string.string_number, strNum)}: $direction\n$pitchInfo"
         }
     }
 
-    @SuppressLint("SetTextI18n")
     private fun showPresetsDialog() {
-        val names = arrayOf("Гитара 6-стр", "Гитара 7-стр", "Бас 4-стр", "Бас 5-стр", "Drop D", "Drop C", "Drop A", "Drop G")
-        MaterialAlertDialogBuilder(this).setTitle("Выберите строй").setItems(names) { _, i ->
-            currentTuning = when(i) { 0->guitar6Standard; 1->guitar7Standard; 2->bass4Standard; 3->bass5Standard; 4->DropD; 5->DropC; 6->DropA; else->DropG }
-            findViewById<Chip>(R.id.chipPresets).isChecked = true
-            statusText.text = "Настройка: ${currentTuning?.name}"
-        }.show()
+        val names = arrayOf(
+            getString(R.string.tuning_guitar_6),
+            getString(R.string.tuning_guitar_7),
+            getString(R.string.tuning_bass_4),
+            getString(R.string.tuning_bass_5),
+            getString(R.string.tuning_drop_d),
+            getString(R.string.tuning_drop_c)
+        )
+        MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.mode_presets))
+            .setItems(names) { _, i ->
+                currentTuning = when(i) {
+                    0 -> guitar6Standard; 1 -> guitar7Standard; 2 -> bass4Standard;
+                    3 -> bass5Standard; 4 -> DropD; else -> DropC
+                }
+                binding.chipPresets.isChecked = true
+                binding.statusText.text = currentTuning?.name
+            }.show()
     }
 
     private fun showTimeSignatureDialog() {
         val sigs = metronomeController.timeSignatures
-        MaterialAlertDialogBuilder(this).setTitle("Размер").setItems(sigs) { _, i ->
-            metronomeController.setSignatureByPosition(i)
-            findViewById<MaterialButton>(R.id.btnTimeSignature)?.text = sigs[i]
-        }.show()
+        MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.title_select_signature))
+            .setItems(sigs) { _, i ->
+                metronomeController.setSignatureByPosition(i)
+                binding.btnTimeSignature.text = sigs[i]
+            }.show()
     }
 
     private fun triggerVibe() {
-        val vibrator = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            val vibratorManager = getSystemService(android.content.Context.VIBRATOR_MANAGER_SERVICE) as android.os.VibratorManager
+        val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vibratorManager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
             vibratorManager.defaultVibrator
         } else {
             @Suppress("DEPRECATION")
-            getSystemService(android.content.Context.VIBRATOR_SERVICE) as android.os.Vibrator
+            getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
 
         if (vibrator.hasVibrator()) {
-            when {
-                // Для Android 10 (API 29) и выше используем четкие системные пресеты
-                android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q -> {
-                    vibrator.vibrate(android.os.VibrationEffect.createPredefined(android.os.VibrationEffect.EFFECT_CLICK))
-                }
-                // Для Android 8.0 (API 26) до Android 9 используем создание эффекта вручную
-                android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O -> {
-                    vibrator.vibrate(android.os.VibrationEffect.createOneShot(50, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
-                }
-                // Для совсем старых устройств
-                else -> {
-                    @Suppress("DEPRECATION")
-                    vibrator.vibrate(50)
-                }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(50)
             }
+        }
+    }
+
+    private fun setupSettings() {
+        val prefs = getSharedPreferences("settings", Context.MODE_PRIVATE)
+
+        // 1. Устанавливаем правильную кнопку при открытии (по сохраненному значению)
+        val savedMode = prefs.getInt("theme_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        when (savedMode) {
+            AppCompatDelegate.MODE_NIGHT_NO -> binding.themeToggleGroup.check(R.id.btnLightTheme)
+            AppCompatDelegate.MODE_NIGHT_YES -> binding.themeToggleGroup.check(R.id.btnDarkTheme)
+            else -> binding.themeToggleGroup.check(R.id.btnSystemTheme)
+        }
+
+        // 2. Слушатель переключения кнопок
+        binding.themeToggleGroup.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (isChecked) {
+                val mode = when (checkedId) {
+                    R.id.btnLightTheme -> AppCompatDelegate.MODE_NIGHT_NO
+                    R.id.btnDarkTheme -> AppCompatDelegate.MODE_NIGHT_YES
+                    else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+                }
+
+                // Применяем тему
+                AppCompatDelegate.setDefaultNightMode(mode)
+                // Сохраняем выбор
+                prefs.edit { putInt("theme_mode", mode) }
+            }
+        }
+
+        // 3. Кнопка "О приложении"
+        binding.btnAbout.setOnClickListener {
+            showAboutDialog()
+        }
+    }
+
+    private fun showAboutDialog() {
+        // Получаем версию программно из BuildConfig или PackageManager
+        val versionName = try {
+            val packageInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                packageManager.getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0))
+            } else {
+                @Suppress("DEPRECATION")
+                packageManager.getPackageInfo(packageName, 0)
+            }
+            packageInfo.versionName
+        } catch (e: Exception) {
+            "1.0" // Резервный вариант
+        }
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.about_title)
+            // Используем только getString(ID, аргумент)
+            .setMessage(getString(R.string.about_message, versionName))
+            .setPositiveButton("OK", null)
+            .show()
+    }
+
+    private fun restoreScreenState() {
+        val selectedId = binding.bottomNavigation.selectedItemId
+
+        // Сбрасываем состояние всех групп
+        listOf(binding.tunerGroup, binding.metronomeLayout, binding.settingsLayout).forEach {
+            it.isVisible = false
+            it.alpha = 1f
+            it.scaleX = 1f
+            it.scaleY = 1f
+        }
+
+        when (selectedId) {
+            R.id.nav_tuner -> {
+                binding.tunerGroup.isVisible = true
+                startTuning()
+            }
+            R.id.nav_metronome -> binding.metronomeLayout.isVisible = true
+            R.id.nav_settings -> binding.settingsLayout.isVisible = true
         }
     }
 
