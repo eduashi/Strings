@@ -26,6 +26,8 @@
     <string name="tuning_drop_g">Drop G</string>
     <string name="status_tuning_selected">Tuning: %s</string>
     <string name="string_number">STR %d</string>
+    <string name="tuner_sensitivity">Mic sensetivity</string>
+    <string name="tuner_sensitivity_min">Low</string>
     <string name="theme_title">Design theme</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
@@ -33,4 +35,5 @@
     <string name="about_title">About app</string>
     <string name="menu_settings">Settings</string>
     <string name="about_message">Strings — Tuner &amp; Metronome  Version: %s Made with love for guitarists.</string>
+    <string name="tuner_sensitivity_max">High</string>
 </resources>

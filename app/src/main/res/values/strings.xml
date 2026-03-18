@@ -31,6 +31,9 @@
     <string name="status_tuning_selected">Настройка: %s</string>
     <string name="string_number">СТРУНА %d</string>
 
+    <string name="tuner_sensitivity">Чувствительность микрофона</string>
+    <string name="tuner_sensitivity_max">Выше</string>
+    <string name="tuner_sensitivity_min">Ниже</string>
     <string name="theme_title">Тема оформления</string>
     <string name="theme_light">Светлая</string>
     <string name="theme_dark">Темная</string>

@@ -4,40 +4,56 @@ import android.annotation.SuppressLint
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import org.jtransforms.fft.FloatFFT_1D
 import kotlin.math.sqrt
 
-class AudioAnalyzer(private val onPitchDetected: (Float) -> Unit) {
+class AudioAnalyzer(private val onFrequencyDetected: (Float) -> Unit) {
 
-    private val sampleRate = 22050
-    private val bufferSize = 2048 // Оптимально для скорости и точности
-    private var isRecording = false
+    private val sampleRate = 44100
+    private val bufferSize = 4096 // Увеличим для лучшего разрешения на низких частотах
+    private var isRunning = false
+    private val fft = FloatFFT_1D(bufferSize.toLong())
+
+    // Настройка чувствительности (SNR)
+    // 8.0 — золотая середина. Выше — строже, ниже — ловит больше шума.
+    private val confidenceMultiplier = 8.0f
+    var amplitudeThreshold = 145 // Порог "тишины". Подбери под свой микрофон (500-2000)
 
     @SuppressLint("MissingPermission")
     fun start() {
-        isRecording = true
-        val audioRecord = AudioRecord(
-            MediaRecorder.AudioSource.MIC,
-            sampleRate,
-            AudioFormat.CHANNEL_IN_MONO,
-            AudioFormat.ENCODING_PCM_16BIT,
-            bufferSize * 2
-        )
-
-        val buffer = ShortArray(bufferSize)
-        audioRecord.startRecording()
-
+        isRunning = true
         Thread {
-            while (isRecording) {
+            val audioRecord = AudioRecord(
+                MediaRecorder.AudioSource.MIC,
+                sampleRate,
+                AudioFormat.CHANNEL_IN_MONO,
+                AudioFormat.ENCODING_PCM_16BIT,
+                bufferSize * 2
+            )
+
+            val buffer = ShortArray(bufferSize)
+            val fftBuffer = FloatArray(bufferSize * 2)
+
+            audioRecord.startRecording()
+
+            while (isRunning) {
                 val read = audioRecord.read(buffer, 0, bufferSize)
                 if (read > 0) {
-                    val volume = calculateRMS(buffer, read)
-                    // Порог чувствительности: игнорируем тишину
-                    if (volume > 40) {
-                        val freq = autoCorrelate(buffer, read)
-                        if (freq > 30f && freq < 1000f) {
-                            onPitchDetected(freq)
-                        }
+                    // 1. Считаем среднюю громкость (RMS)
+                    var sumSum = 0.0
+                    for (s in buffer) sumSum += s.toDouble() * s
+                    val rms = sqrt(sumSum / read)
+
+                    // 2. Если в комнате слишком тихо — вообще не нагружаем FFT
+                    if (rms < amplitudeThreshold) {
+                        onFrequencyDetected(-1f)
+                        continue
                     }
+                    // 3. Если громко — делаем FFT как раньше
+                    for (i in 0 until bufferSize) fftBuffer[i] = buffer[i].toFloat()
+                    fft.realForward(fftBuffer)
+                    val frequency = calculateDominantFrequency(fftBuffer)
+                    onFrequencyDetected(frequency)
                 }
             }
             audioRecord.stop()
@@ -45,39 +61,39 @@ class AudioAnalyzer(private val onPitchDetected: (Float) -> Unit) {
         }.start()
     }
 
-    private fun autoCorrelate(buffer: ShortArray, size: Int): Float {
-        var bestOffset = -1
-        var maxCorrelation = -1f
+    private fun calculateDominantFrequency(fftData: FloatArray): Float {
+        var maxMagnitude = -1f
+        var maxIndex = -1
+        var sumMagnitude = 0f
 
-        // Диапазон поиска: от 30 Гц до 1000 Гц
-        // Превращаем частоту в смещение (лаг) в семплах
-        val minLag = sampleRate / 1000 // Для высоких частот
-        val maxLag = sampleRate / 30   // Для низких частот (около 735 семплов)
+        // Вычисляем магнитуды (амплитуды) для каждой корзины (bin)
+        // В JTransforms результат лежит как [re, im, re, im...]
+        for (i in 0 until bufferSize / 2) {
+            val re = fftData[2 * i]
+            val im = fftData[2 * i + 1]
+            val magnitude = sqrt(re * re + im * im)
 
-        for (lag in minLag until maxLag) {
-            var correlation = 0f
-            for (i in 0 until size - lag) {
-                correlation += (buffer[i].toFloat() * buffer[i + lag].toFloat())
-            }
+            sumMagnitude += magnitude
 
-            if (correlation > maxCorrelation) {
-                maxCorrelation = correlation
-                bestOffset = lag
+            if (magnitude > maxMagnitude) {
+                maxMagnitude = magnitude
+                maxIndex = i
             }
         }
 
-        return if (bestOffset != -1) {
-            sampleRate.toFloat() / bestOffset
-        } else {
-            -1f
+        val averageMagnitude = sumMagnitude / (bufferSize / 2)
+
+        // --- ФИЛЬТР ДОСТОВЕРНОСТИ ---
+        // Проверяем: наш пик должен быть значительно выше среднего уровня шума
+        if (maxMagnitude < averageMagnitude * confidenceMultiplier) {
+            return -1.0f // Слишком много шума или тишина
         }
+
+        // Переводим индекс корзины в герцы
+        return maxIndex.toFloat() * sampleRate / bufferSize
     }
 
-    private fun calculateRMS(buffer: ShortArray, read: Int): Double {
-        var sum = 0.0
-        for (i in 0 until read) sum += buffer[i] * buffer[i]
-        return sqrt(sum / read)
+    fun stop() {
+        isRunning = false
     }
-
-    fun stop() { isRecording = false }
 }

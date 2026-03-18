@@ -47,6 +47,7 @@ class MainActivity : AppCompatActivity() {
     private var autoStepRunnable: Runnable? = null
     private var isTunerActive = false
     private var backgroundAnimator: ValueAnimator? = null
+    private var totalTicks = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val prefs = getSharedPreferences("settings", Context.MODE_PRIVATE)
@@ -62,6 +63,7 @@ class MainActivity : AppCompatActivity() {
         setupMetronome()
         setupNavigation()
         setupSettings()
+        setupSensitivitySlider()
         checkAudioPermission()
 
         binding.root.post { restoreScreenState() }
@@ -111,6 +113,8 @@ class MainActivity : AppCompatActivity() {
     // --- Логика Тюнера ---
 
     private fun processFrequencyWithSmoothing(hz: Float) {
+        // Если анализатор вернул -1, значит это шум.
+        if (hz <= 0f) return
         if (hz <= 25f || hz > 1000f) return
         pitchHistory.add(hz)
         if (pitchHistory.size > PITCH_HISTORY_SIZE) pitchHistory.removeAt(0)
@@ -237,10 +241,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun startTuning() {
-        isTunerActive = true
+    private fun startTuning() { // или как-то иначе названный метод запуска
         analyzer?.stop()
-        analyzer = AudioAnalyzer { hz -> runOnUiThread { processFrequencyWithSmoothing(hz) } }
+
+        analyzer = AudioAnalyzer { hz ->
+            runOnUiThread { processFrequencyWithSmoothing(hz) }
+        }
+        // Мы берем текущее значение из слайдера и отдаем его анализатору
+        analyzer?.amplitudeThreshold = binding.sliderSensitivity.value.toInt()
+
         analyzer?.start()
     }
 
@@ -255,7 +264,9 @@ class MainActivity : AppCompatActivity() {
             },
             onTick = { beat ->
                 runOnUiThread {
-                    binding.metronomeScale.animateTick(if (beat % 2 != 0) 100f else -100f)
+                    totalTicks++
+                    val direction = if (totalTicks % 2 != 0) 100f else -100f
+                    binding.metronomeScale.animateTick(direction)
                     binding.metronomeScale.flashAccent(beat == 1)
                 }
             }
@@ -282,10 +293,17 @@ class MainActivity : AppCompatActivity() {
             setOnClickListener { if (!isAutoChanging) metronomeController.bpm -= 1 }
             setOnTouchListener { _, e -> handleAuto(e, -1); false }
         }
+
         binding.btnStartStop.setOnClickListener {
+            // Если метроном НЕ запущен, значит мы его сейчас включим
+            if (!metronomeController.isRunning()) {
+                totalTicks = 0 // Сбрасываем, чтобы маятник всегда начинал с одной стороны
+            }
+
             metronomeController.toggle()
             updateMetronomeUI()
         }
+
         binding.btnTap.setOnClickListener { metronomeController.handleTap() }
         binding.btnTimeSignature.setOnClickListener { showTimeSignatureDialog() }
     }
@@ -381,20 +399,83 @@ class MainActivity : AppCompatActivity() {
 
     private fun restoreScreenState() {
         val selectedId = binding.bottomNavigation.selectedItemId
+
+        // Сбрасываем видимость и анимации всех слоев
         listOf(binding.tunerGroup, binding.metronomeLayout, binding.settingsLayout).forEach {
-            it.isVisible = false; it.alpha = 1f; it.scaleX = 1f; it.scaleY = 1f
+            it.isVisible = false
+            it.alpha = 1f
+            it.scaleX = 1f
+            it.scaleY = 1f
         }
+
         when (selectedId) {
-            R.id.nav_tuner -> { binding.tunerGroup.isVisible = true; startTuning() }
-            R.id.nav_metronome -> binding.metronomeLayout.isVisible = true
-            R.id.nav_settings -> binding.settingsLayout.isVisible = true
+            R.id.nav_tuner -> {
+                binding.tunerGroup.isVisible = true
+                startTuning()
+            }
+            R.id.nav_metronome -> {
+                binding.metronomeLayout.isVisible = true
+                // ГАРАНТИРУЕМ, что тюнер выключен
+                stopTuningAndResetUI()
+            }
+            R.id.nav_settings -> {
+                binding.settingsLayout.isVisible = true
+                // ГАРАНТИРУЕМ, что тюнер выключен
+                stopTuningAndResetUI()
+            }
         }
     }
 
+    // Вынесем сброс в отдельный метод, чтобы не дублировать код
+    private fun stopTuningAndResetUI() {
+        isTunerActive = false
+        analyzer?.stop()
+        backgroundAnimator?.cancel()
+
+        // Возвращаем фону стандартный цвет поверхности,
+        // чтобы "зелень" не залипла при смене темы
+        val surfaceColor = getThemeColor(com.google.android.material.R.attr.colorSurface)
+        binding.rootLayout.setBackgroundColor(surfaceColor)
+    }
+
+    private fun setupSensitivitySlider() {
+        val prefs = getSharedPreferences("tuner_settings", Context.MODE_PRIVATE)
+        // 1. Загружаем сохраненное значение (по умолчанию 150)
+        val savedValue = prefs.getFloat("sensitivity", 150f)
+        // Устанавливаем начальное состояние
+        binding.sliderSensitivity.value = savedValue
+        updateSensitivityText(savedValue.toInt()) // Обновляем заголовок при запуске
+
+        // 2. Сразу передаем его в анализатор (если он уже создан)
+        analyzer?.amplitudeThreshold = savedValue.toInt()
+
+        // 3. Слушатель изменений
+        binding.sliderSensitivity.addOnChangeListener { _, value, _ ->
+            // Обновляем порог в реальном времени
+            analyzer?.amplitudeThreshold = value.toInt()
+
+            updateSensitivityText(value.toInt())
+            // Сохраняем в память
+            prefs.edit().putFloat("sensitivity", value).apply()
+
+            // Маленький виброотклик для приятного ощущения
+            binding.sliderSensitivity.performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK)
+        }
+    }
+    private fun updateSensitivityText(value: Int) {
+        val baseText = getString(R.string.tuner_sensitivity)
+        binding.tvSensitivityTitle.text = "$baseText ($value)"
+    }
+
     private fun checkAudioPermission() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            // Запускаем ТОЛЬКО если выбрана вкладка тюнера
+            if (binding.bottomNavigation.selectedItemId == R.id.nav_tuner) {
+                startTuning()
+            }
+        } else {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 101)
-        } else if (binding.bottomNavigation.selectedItemId == R.id.nav_tuner) startTuning()
+        }
     }
 
     override fun onDestroy() {

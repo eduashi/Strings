@@ -6,5 +6,13 @@
         <item name="android:windowLightStatusBar">true</item>
     </style>
 
+    <style name="Widget.App.FatSlider" parent="Widget.Material3.Slider">
+        <item name="trackHeight">16dp</item>
+        <item name="thumbRadius">14dp</item>
+        <item name="trackColorActive">?attr/colorPrimary</item>
+        <item name="trackColorInactive">?attr/colorSurfaceVariant</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.Material3.Corner.Full</item>
+    </style>
+
     <style name="Theme.Tuner" parent="Base.Theme.Tuner" />
 </resources>
