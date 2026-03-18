@@ -1,26 +1,30 @@
 # Strings — Guitar Tuner & Metronome 
 
-**Strings** — это минималистичный и точный тюнер для гитары, созданный для музыкантов, которые ценят простоту и надежность. Приложение помогает быстро настроить инструмент и держать ритм с помощью встроенного метронома.
+**Strings** is a minimalist and accurate guitar tuner app for Android, designed for musicians who value simplicity and reliability. It helps you tune your instrument quickly and keep the beat with a built-in metronome.
 
-##  Особенности
-* **Точный анализ звука:** Использует FFT (быстрое преобразование Фурье) для определения частоты струн.
-* **Визуальная настройка:** Интуитивная шкала, показывающая отклонение от нужной ноты.
-* **Встроенный метроном:** Настраиваемый темп для тренировок.
-* **Кастомный дизайн:** Уникальная иконка и интерфейс в темных тонах.
+##  Features
+* **Precise Pitch Detection:** Uses FFT (Fast Fourier Transform) for real-time frequency analysis.
+* **Visual Tuning:** Intuitive scale showing pitch deviation for perfect tuning.
+* **Integrated Metronome:** Adjustable tempo for your practice sessions.
+* **Custom Design:** Unique "Diamond" icon and sleek dark-mode interface.
 
-##  Технологии
+##  Tech Stack
 * **Language:** Kotlin
 * **UI:** Android XML (Material Design)
-* **Audio Processing:** AudioRecord API / Custom Audio Analyzer
+* **Audio Processing:** AudioRecord API
 * **Package Name:** `com.eduashi.strings`
 
-## 🛠 Установка
-Если вы хотите протестировать приложение:
-1. Скачайте [Strings.apk](ссылка_на_твой_файл_если_зальешь_его_в_релизы)
-2. Разрешите установку из неизвестных источников в настройках Android.
-3. Настраивайте свою гитару!
+##  Installation
+1. Go to the [Releases](https://github.com/eduashi/Strings/releases) section.
+2. Download the `Strings_v1.0.apk`.
+3. Install it on your Android device (ensure "Install from unknown sources" is enabled).
 
-## 👩‍💻 Автор
-Разработано **eduashi**.
-Проект создан как часть обучения мобильной разработке на Android.
+##  Author
+Developed by **eduashi**.
+This project was created as part of an Android development learning journey.
 
+## Screenshots
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/0a46bac4-43bf-4186-a496-7a8cbdaaff8b" width="30%" alt="Tuner" />
+  <img src="https://github.com/user-attachments/assets/f49f7f91-8f5a-48e0-9773-ed861d04aee0" width="30%" alt="Metronome" />
+</p>>
