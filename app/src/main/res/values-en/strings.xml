@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Strings</string>
+    <string name="tuner_mic_off">The tuner doesn\'t work without a microphone.</string>
     <string name="mode_chromatic">Chromatic</string>
     <string name="mode_presets">Tunings</string>
     <string name="status_listening">Listening...</string>
@@ -11,6 +12,7 @@
     <string name="title_select_tuning">Select Tuning</string>
     <string name="metronome_title">Metronome</string>
     <string name="tuner_title">Tuner</string>
+    <string name="generator_title">Tone generator</string>
     <string name="settings_title">Settings</string>
     <string name="pitch_detected">Pitch: %s Hz</string>
     <string name="too_low">Too Low</string>
@@ -26,14 +28,24 @@
     <string name="tuning_drop_g">Drop G</string>
     <string name="status_tuning_selected">Tuning: %s</string>
     <string name="string_number">STR %d</string>
+    <string name="chipWaveSaw">Saw</string>
+    <string name="wave_saw_desc">Rich tone</string>
     <string name="tuner_sensitivity">Mic sensetivity</string>
     <string name="tuner_sensitivity_min">Low</string>
     <string name="theme_title">Design theme</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
     <string name="theme_system">System</string>
+    <string name="system_palette">System palette</string>
     <string name="about_title">About app</string>
     <string name="menu_settings">Settings</string>
-    <string name="about_message">Strings — Tuner &amp; Metronome  Version: %s Made with love for guitarists.</string>
     <string name="tuner_sensitivity_max">High</string>
+    <string name="chipWaveSine">Sinus</string>
+    <string name="chipWaveSquare">Square</string>
+    <string name="wave_sine_desc">Pure tone</string>
+    <string name="wave_square_desc">Sharp tone</string>
+    <string name="default_frequency">440.0 Hz</string>
+    <string name="note_word">Note</string>
+    <string name="octave_word">Octave</string>
+    <string name="about_message">Strings — Tuner, Metronome and Tone Generator\n\nVersion: %s\n\nDesigned with love for musicians</string>
 </resources>

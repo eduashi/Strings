@@ -14,8 +14,8 @@ android {
         applicationId = "com.eduashi.strings"
         minSdk = 24
         targetSdk = 36
-        versionCode = 3
-        versionName = "1.3"
+        versionCode = 20
+        versionName = "2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -40,7 +40,7 @@ android {
 }
 
 dependencies {
-    implementation("com.github.wendykierp:JTransforms:3.1")
+    implementation("com.github.wendykierp:JTransforms:3.2")
     implementation(libs.material.v1110)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

@@ -1,73 +1,77 @@
-Strings — Guitar Tuner & Metronome 🎸
-Strings is a minimalist, accurate, and modern guitar tuner app for Android, designed for musicians who value simplicity, reliability, and style. Version 1.3 introduces a professional-grade noise filtering engine and a rock-solid rhythm controller.
+Strings — Tuner, Metronome & Generator 🎸
+Strings is a minimalist, accurate, and professional-grade music toolset for Android. Designed for musicians who demand precision and style, version 2.0 transforms the app into a complete workstation with the addition of a powerful Tone Generator and a fully adaptive Material 3 interface.
 
-🚀 What's New in v1.3
-🛡️ Smart Noise Filtering (Tuner Engine)
-Manual Sensitivity Control: Adjust the microphone threshold (RMS) directly from the settings. Perfect for tuning in noisy environments or with low-output instruments.
+🚀 What's New in v2.0
+🎹 Professional Tone Generator (New!)
+Multi-Waveform Support: Switch between Sine, Square, and Sawtooth waves for different acoustic needs.
 
-Confidence Analysis: Upgraded FFT logic that distinguishes between a clear string vibration and background hiss.
+Smart Selectors: Integrated Note & Octave selectors that stay perfectly synced with the frequency slider.
 
-Live Visual Feedback: See the exact sensitivity value (50–2000) as you tune it.
+Precision Input: Tap the frequency display to manually enter any value in Hz for scientific accuracy.
 
-🥁 Advanced Rhythm Engine (Metronome)
-Continuous Swing Logic: Fixed the "sticking" pendulum bug for odd time signatures (3/4, 5/4, 7/8, etc.). The scale now moves fluidly regardless of the beat count.
+Top Notifications: Smooth, animated in-app notifications for waveform changes that follow the system's dynamic palette.
 
-New Time Signatures: Expanded support for complex meters (5/4, 7/4, 5/8, 7/8, 9/8).
+🎨 Complete Material 3 Overhaul
+Dynamic Colors: The entire app—including the Tuner scale and Metronome markers—now automatically adapts to the Android system wallpaper.
 
-Haptic Feedback: Tactile clicks when adjusting BPM for a more "hardware" feel.
+Adaptive UI Components: All custom views, dialogs, and sliders now use the colorSecondaryContainer and colorOutline attributes for a seamless "system-native" look.
 
-✨ Features
+Theming Engine: Enhanced Light/Dark/System theme switching with a more robust persistence logic.
+
+⏱️ Enhanced Rhythm & Logic
+Visual Pulse 2.0: The Metronome now features a full-screen flash on the downbeat (Beat 1) and a more responsive "pendulum" animation.
+
+Haptic Engine: Refined tactile feedback across the entire app—from perfect tuning confirmation to slider ticks and button presses.
+
+UI Polish: Improved layout transitions and fixed navigation bugs for a faster, "snappier" feel.
+
+✨ Core Features
+
 🎯 Precision Tuning
+
 Chromatic Mode: High-accuracy real-time frequency analysis.
 
 Instrument Presets: Quick tuning for 6/7-string guitars, 4/5-string basses, Drop D, and Drop C.
 
-Dynamic Visuals: Background color transitions to Perfect Green when you're in tune.
+Dual-Layer Noise Reduction:
 
-Vibration Alert: Haptic confirmation when a string is perfectly tuned.
+RMS Noise Gate: User-adjustable microphone sensitivity threshold to ignore ambient background noise.
 
-⏱️ Professional Metronome
-BPM Range: 30 to 250 BPM with high-precision timing.
+Confidence Analysis (FFT Logic): A sophisticated engine that analyzes the "purity" of the signal. It filters out non-musical artifacts and harmonic ghosts, ensuring the tuner only reacts to stable, clear string vibrations.
 
-Turbo-Scroll: Long-press + or - for rapid 10 BPM jumps.
+Visual & Haptic Cues: Background transitions to Perfect Green and the device vibrates when the string is perfectly in tune.
 
-Tap Tempo: Set your rhythm manually by tapping.
+🥁 Advanced Metronome
+BPM Range: 30 to 300 BPM with rock-solid timing.
 
-Visual Pulse: Animated scale and flash accents on the downbeat (Beat 1).
+Complex Meters: Support for 2/4, 3/4, 4/4, 5/4, 7/4, 5/8, 7/8, 9/8 signatures.
 
-🎨 Personalized UX
-Material 3 & Dynamic Colors: Fully integrated with Android's latest design language.
+Turbo-Scroll: Long-press +/- for rapid 10 BPM adjustments.
 
-Theme Support: Light, Dark, or System default modes (with fix for microphone lifecycle on theme change).
+Tap Tempo: Set the rhythm manually by tapping the screen.
 
-Bilingual: Full native support for English and Russian.
+🌍 Localization: English, Russian.
 
 🛠 Tech Stack
 Language: Kotlin
 
-Audio: AudioRecord API + FFT (Fast Fourier Transform) + RMS Noise Gate.
+Audio Engine: AudioRecord API + FFT (Fast Fourier Transform) + Custom Tone Synthesis.
 
-UI: Material Components (M3), ViewBinding, Custom Animated Views.
+UI: Material Components (M3), ViewBinding, Custom Animated Canvas Views.
 
-Persistence: SharedPreferences for saving sensitivity and theme states.
+Persistence: SharedPreferences for saving sensitivity, theme, and last-used tab states.
 
 📸 Screenshots
 <p align="center">
-<img src="https://github.com/user-attachments/assets/d66f124c-4c07-4216-a9d1-569617af999a" width="30%" alt="Tuner Screen" />
-<img src="https://github.com/user-attachments/assets/1ba7a835-f8e7-43e2-90d9-82ed7809dc27" width="30%" alt="Metronome Screen" />
-<img src="https://github.com/user-attachments/assets/02e14944-8438-4fbb-ad00-cc1bd057f26a" width="30%" alt="Settings Screen v1.3" />
+<img src="https://github.com/user-attachments/assets/4ca76cea-e5db-4b9d-96ff-8f5814da9af6" width="30%" alt="Tuner Screen" />
+<img src="https://github.com/user-attachments/assets/7eed38e3-ce3c-4557-82c0-bf3243e2541e" width="30%" alt="Metronome Screen" />
+<img src="https://github.com/user-attachments/assets/6a054ed9-0d09-4335-9e20-a90171a27470" width="30%" alt="Tone Generator Screen" />
+<img src="https://github.com/user-attachments/assets/459dfaa8-e498-475f-b3e4-af11160cd6ce" width="30%" alt="Settings Screen" />
 </p>
 
 📦 Installation
 Go to the Releases section.
 
-Download Strings_v1.3.apk.
+Download Strings_v2.0.apk.
 
-Install and grant Microphone permissions for the tuner to work.
-
-👨‍💻 Author
-Developed by eduashi.
-
-Evolution of the project: v1.0 (Logic) → v1.1 (UI) → v1.3 (Professional Audio & UX).
-
-Tune your strings, keep your beat.
+Install and grant Microphone permissions (required for the Tuner to analyze frequency).

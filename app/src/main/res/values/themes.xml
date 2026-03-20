@@ -1,18 +1,47 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
     <style name="Base.Theme.Tuner" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
         <item name="android:windowLightStatusBar">true</item>
-    </style>
-
-    <style name="Widget.App.FatSlider" parent="Widget.Material3.Slider">
-        <item name="trackHeight">16dp</item>
-        <item name="thumbRadius">14dp</item>
-        <item name="trackColorActive">?attr/colorPrimary</item>
-        <item name="trackColorInactive">?attr/colorSurfaceVariant</item>
-        <item name="shapeAppearance">@style/ShapeAppearance.Material3.Corner.Full</item>
+        <item name="android:windowBackground">?attr/colorSurface</item>
     </style>
 
     <style name="Theme.Tuner" parent="Base.Theme.Tuner" />
+
+    <style name="Widget.App.FatSlider" parent="Widget.Material3.Slider">
+        <item name="thumbTint">?attr/colorPrimary</item>
+        <item name="trackColorActive">?attr/colorPrimary</item>
+        <item name="trackColorInactive">?attr/colorSecondaryContainer</item>
+        <item name="tickColorActive">?attr/colorOnPrimary</item>
+        <item name="tickColorInactive">?attr/colorPrimary</item>
+        <item name="trackHeight">10dp</item>
+    </style>
+
+    <style name="Widget.Strings.ModeButton" parent="Widget.Material3.Button">
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+
+        <item name="cornerRadius">36dp</item>
+
+        <item name="android:paddingTop">16dp</item>
+        <item name="android:paddingBottom">16dp</item>
+
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="android:elevation">0dp</item>
+        <item name="android:stateListAnimator">@null</item>
+
+        <item name="iconGravity">textStart</item>
+    </style>
+
+    <style name="Widget.Strings.ModeButton.Selected" parent="Widget.Strings.ModeButton">
+        <item name="backgroundTint">?attr/colorPrimary</item>
+        <item name="android:textColor">?attr/colorOnPrimary</item>
+    </style>
+
+    <style name="Widget.Strings.ModeButton.Unselected" parent="Widget.Strings.ModeButton">
+        <item name="backgroundTint">?attr/colorSurfaceVariant</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+    </style>
+
 </resources>

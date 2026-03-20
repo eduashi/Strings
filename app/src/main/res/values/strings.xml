@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">Strings</string>
 
+    <string name="tuner_mic_off">Без микрофона тюнер не работает.</string>
     <string name="mode_chromatic">Хроматический</string>
     <string name="mode_presets">Готовые строи</string>
     <string name="status_listening">Слушаю…</string>
@@ -13,6 +14,7 @@
     <string name="title_select_tuning">Выберите строй</string>
     <string name="metronome_title">Метроном</string>
     <string name="tuner_title">Тюнер</string>
+    <string name="generator_title">Генератор тона</string>
     <string name="settings_title">Настройки</string>
     <string name="pitch_detected">Частота: %s Гц</string>
     <string name="too_low">Низко</string>
@@ -31,6 +33,21 @@
     <string name="status_tuning_selected">Настройка: %s</string>
     <string name="string_number">СТРУНА %d</string>
 
+    <string name="chipWaveSine">Синус</string>
+    <string name="chipWaveSquare">Квадрат</string>
+    <string name="chipWaveSaw">Пила</string>
+    <string name="wave_sine_desc">Чистый тон</string>
+    <string name="wave_square_desc">Резкий тон</string>
+    <string name="wave_saw_desc">Насыщенный тон</string>
+
+
+    <string name="symbol_minus" translatable="false">−</string>
+    <string name="symbol_plus" translatable="false">+</string>
+    <string name="default_bpm" translatable="false">120</string>
+    <string name="default_time_signature" translatable="false">4/4</string>
+    <string name="default_frequency">440.0 Гц</string>
+    <string name="default_note" translatable="false">A4</string>
+
     <string name="tuner_sensitivity">Чувствительность микрофона</string>
     <string name="tuner_sensitivity_max">Выше</string>
     <string name="tuner_sensitivity_min">Ниже</string>
@@ -38,7 +55,11 @@
     <string name="theme_light">Светлая</string>
     <string name="theme_dark">Темная</string>
     <string name="theme_system">Системная</string>
+    <string name="system_palette">Системная палитра</string>
     <string name="about_title">О приложении</string>
     <string name="menu_settings">Настройки</string>
-    <string name="about_message">Strings — Тюнер и Метроном  Версия: %s Разработано с любовью для гитаристов.</string>
+    <string name="about_message">Strings — Тюнер, Метроном и Генератор тона\n\nВерсия: %s\n\nРазработано с любовью для музыкантов.</string>
+    <string name="symbol_dash" translatable="false">—</string>
+    <string name="note_word">Нота</string>
+    <string name="octave_word">Октава</string>
 </resources>

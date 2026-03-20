@@ -9,6 +9,10 @@
         android:icon="@drawable/outline_acute_24"
         android:title="@string/metronome_title" />
     <item
+        android:id="@+id/nav_generator"
+        android:icon="@drawable/ic_waveform"
+        android:title="@string/generator_title" />
+    <item
         android:id="@+id/nav_settings"
         android:icon="@drawable/ic_settings"
         android:title="@string/settings_title"/>
