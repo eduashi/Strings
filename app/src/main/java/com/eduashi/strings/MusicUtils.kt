@@ -5,7 +5,6 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 
 object MusicUtils {
-    // Список названий нот (единый для всех функций)
     val noteNames = listOf("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B")
     val octaves = (0..8).toList()
 

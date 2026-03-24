@@ -36,7 +36,7 @@ class MpmDetector(private val windowSize: Int, private val sampleRate: Int) {
         }
         fftProcessor.fft(re, im)
 
-        // Вытаскиваем истинный ACF (он теперь идеально чистый)
+        // Вытаскиваем истинный ACF
         val acf = FloatArray(windowSize)
         for (i in 0 until windowSize) {
             acf[i] = (re[i] / nFft).toFloat()

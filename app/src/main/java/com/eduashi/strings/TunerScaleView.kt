@@ -9,12 +9,13 @@ import android.util.TypedValue
 import android.view.View
 import android.view.animation.DecelerateInterpolator
 import com.google.android.material.R
+import kotlin.math.abs
 
 class TunerScaleView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
 
-    // --- НАСТРОЙКИ КРАСОК (Paint) ---
+    // --- НАСТРОЙКИ КРАСОК ---
 
-    // 1. Краска для жирного "трека" (подложки) - теперь как у системного Slider
+    // 1. Краска для жирного "трека" (подложки)
     private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         strokeWidth = 24f
         style = Paint.Style.STROKE
@@ -109,7 +110,7 @@ class TunerScaleView(context: Context, attrs: AttributeSet?) : View(context, att
             markerPaint.strokeWidth = 6f
             canvas.drawLine(widthF / 2, centerY - 25, widthF / 2, centerY + 25, markerPaint)
 
-            if (Math.abs(currentDisplayCents - targetCents) > 0.01f) {
+            if (abs(currentDisplayCents - targetCents) > 0.01f) {
                 currentDisplayCents += (targetCents - currentDisplayCents) * lerpFactor
                 postInvalidateOnAnimation()
             }

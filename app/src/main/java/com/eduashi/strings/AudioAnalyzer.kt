@@ -22,7 +22,7 @@ class AudioAnalyzer(private val onFrequencyDetected: (Float) -> Unit,
 
     fun start() {
         lastSample = 0f
-        if (isRunning) return // ЕСЛИ УЖЕ ЗАПУЩЕН — НИЧЕГО НЕ ДЕЛАЕМ
+        if (isRunning) return
         isRunning = true
         Thread {
             try {
@@ -52,7 +52,6 @@ class AudioAnalyzer(private val onFrequencyDetected: (Float) -> Unit,
 
                         onVolumeChanged(rms)
 
-                        // Если звук ниже порога — шлем -1 (для тюнера это "тишина")
                         if (rms < amplitudeThreshold) {
                             onFrequencyDetected(-1f)
                             continue

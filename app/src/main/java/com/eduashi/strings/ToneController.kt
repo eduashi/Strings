@@ -18,7 +18,7 @@ class ToneController {
 
 
     fun start(freq: Double) {
-        if (isPlaying) return // Не запускаем, если уже играет
+        if (isPlaying) return
         frequency = freq
         isPlaying = true
 
@@ -49,7 +49,7 @@ class ToneController {
             try {
                 audioTrack?.play()
                 while (isPlaying) {
-                    for (i in samples.indices) { // Добавили скобку
+                    for (i in samples.indices) {
                         val sampleValue: Double = when (currentWaveform) {
                             Waveform.SINE -> sin(angle)
                             Waveform.SQUARE -> if (angle < PI) 1.0 else -1.0
@@ -62,7 +62,7 @@ class ToneController {
                         // 2. Обновляем угол (шаг фазы)
                         angle += 2.0 * PI * frequency / sampleRate
                         if (angle > 2.0 * PI) angle -= 2.0 * PI
-                    } // Закрыли скобку цикла for
+                    }
 
                     val track = audioTrack
                     if (track != null && track.state == AudioTrack.STATE_INITIALIZED && isPlaying) {
@@ -79,8 +79,6 @@ class ToneController {
 
     fun stop() {
         isPlaying = false
-        // Мы не вызываем release здесь, чтобы поток не упал на полуслове.
-        // Мы просто ставим флаг, а поток сам завершится и вызовет release.
     }
 
     private fun stopAndRelease() {

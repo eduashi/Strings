@@ -30,7 +30,6 @@ import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.activity.addCallback
-import androidx.annotation.RequiresApi
 import com.google.android.material.color.MaterialColors
 import androidx.annotation.StyleRes
 import androidx.appcompat.app.AppCompatActivity
@@ -138,7 +137,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        // Немедленно освобождаем микрофон и останавливаем анимации
+
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         stopTuningAndResetUI()
 
@@ -545,7 +544,6 @@ class MainActivity : AppCompatActivity() {
     private fun setupGeneratorUI() {
         binding.chipWaveSine.isChecked = true
 
-        // Настройка слайдера: ВСЕГДА 0.0 - 1.0
         binding.sliderGenerator.valueFrom = 0f
         binding.sliderGenerator.valueTo = 1f
         if (binding.sliderGenerator.value !in 0f..1f) {
@@ -553,7 +551,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.sliderGenerator.addOnChangeListener { slider, value, fromUser ->
-            // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: переводим 0..1 в Герцы
             val freq = sliderValueToFreq(value)
             toneController.setFrequency(freq)
 
@@ -571,15 +568,11 @@ class MainActivity : AppCompatActivity() {
         binding.tvGeneratorFreq.setOnClickListener {
             it.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
 
-            // Передаем логику того, что сделать с числом после ввода
             showFrequencyInputDialog { newFreq ->
-                // Ограничиваем ввод диапазоном 20-5000 Гц
                 val clampedFreq = newFreq.coerceIn(GEN_MIN_FREQ, GEN_MAX_FREQ)
 
-                // Устанавливаем положение слайдера (это само обновит текст и звук)
                 binding.sliderGenerator.value = freqToSliderValue(clampedFreq)
 
-                // Явно обновляем выпадающие списки ноты и октавы
                 updateNoteSelectorsUI(clampedFreq)
             }
         }
@@ -605,12 +598,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun selectWaveform(waveform: ToneController.Waveform) {
-        // Снимаем выделение со всех
+
         binding.chipWaveSine.isChecked = false
         binding.chipWaveSquare.isChecked = false
         binding.chipWaveSaw.isChecked = false
 
-        // Включаем нужный (принудительно true) и обновляем звук
         when (waveform) {
             ToneController.Waveform.SINE -> {
                 binding.chipWaveSine.isChecked = true
@@ -644,14 +636,10 @@ class MainActivity : AppCompatActivity() {
             val octave = octaveStr.toIntOrNull() ?: 4
 
             if (noteIndex != -1) {
-                // 1. Получаем реальную частоту выбранной ноты
                 val freq = MusicUtils.getFrequency(noteIndex, octave)
 
-                // 2. ИСПРАВЛЕНИЕ: Используем переменную 'freq', которую создали выше
-                // Переводим Гц в значение прогресса 0.0 - 1.0 для логарифмического слайдера
-                binding.sliderGenerator.value = freqToSliderValue(freq)
 
-                // Звук и текст обновятся автоматически через Listener слайдера
+                binding.sliderGenerator.value = freqToSliderValue(freq)
             }
         }
 
@@ -745,7 +733,6 @@ class MainActivity : AppCompatActivity() {
         val surfaceColor = getThemeColor(com.google.android.material.R.attr.colorSurface)
         binding.rootLayout.setBackgroundColor(surfaceColor)
 
-        // Очистка текста ноты для избежания эффекта "зависания"
         binding.noteText.text = getString(R.string.symbol_dash)
         binding.statusText.text = ""
         binding.tunerScale.setCents(0f)
@@ -770,18 +757,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun resetTunerVisuals() {
-        // 1. Плавный возврат фона к стандартному
         val surfaceColor = MaterialColors.getColor(binding.rootLayout, com.google.android.material.R.attr.colorSurface)
         binding.rootLayout.animateBackgroundColor(surfaceColor)
 
-        // 2. Сбрасываем цвета текста к стандартным
         val colorPrimary = MaterialColors.getColor(binding.noteText, com.google.android.material.R.attr.colorPrimary)
         val colorOutline = MaterialColors.getColor(binding.statusText, com.google.android.material.R.attr.colorOutline)
 
         binding.noteText.setTextColor(colorPrimary)
         binding.statusText.setTextColor(colorOutline)
 
-        // 3. Сбрасываем ползунок и тексты
         binding.tunerScale.setCents(0f)
         if (isPresetMode) {
             binding.noteText.text = currentTuning?.name ?: getString(R.string.symbol_dash)
@@ -794,7 +778,6 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("SetTextI18n")
     private fun setupSensitivitySlider() {
-        // 1. Загрузка данных и начальная настройка
         val savedValue = sharedPrefs.getFloat("sensitivity", 150f)
         binding.sliderSensitivity.value = savedValue
         analyzer?.amplitudeThreshold = savedValue.toInt()

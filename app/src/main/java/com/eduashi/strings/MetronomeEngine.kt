@@ -20,7 +20,6 @@ class MetronomeEngine(var bpm: Int, var beatsPerMeasure: Int, val onTick: (Int) 
     var multiplier: Double = 1.0
 
     init {
-        // Подготавливаем треки заранее один раз
         val  TICK_FREQ = generateClick(800.0)
         val ACCENT_FREQ = generateClick(1200.0)
 
@@ -56,11 +55,9 @@ class MetronomeEngine(var bpm: Int, var beatsPerMeasure: Int, val onTick: (Int) 
 
         val intervalNanos = (60_000_000_000.0 / (bpm * multiplier)).toLong()
 
-        // Используем scheduleAtFixedRate для строгого соблюдения темпа
         executor?.scheduleWithFixedDelay({
             currentBeat = (currentBeat % beatsPerMeasure) + 1
 
-            // Проигрываем заранее созданный трек
             if (currentBeat == 1) {
                 accentTrack?.stop()
                 accentTrack?.reloadStaticData()
