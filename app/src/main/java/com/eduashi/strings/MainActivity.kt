@@ -768,8 +768,8 @@ class MainActivity : AppCompatActivity() {
 
         binding.tunerScale.setCents(0f)
         if (isPresetMode) {
-            binding.noteText.text = currentTuning?.name ?: getString(R.string.symbol_dash)
-            binding.statusText.text = ""
+            binding.noteText.text = getString(R.string.symbol_dash)
+            binding.statusText.text = currentTuning?.name + "\n"
         } else {
             binding.noteText.text = getString(R.string.symbol_dash)
             binding.statusText.text = getString(R.string.status_listening)
