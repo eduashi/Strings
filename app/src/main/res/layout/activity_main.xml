@@ -45,7 +45,9 @@
                     android:layout_height="wrap_content"
                     android:text="@string/status_listening"
                     android:textAllCaps="true"
-                    android:textColor="?attr/colorOutline" />
+                    android:textColor="?attr/colorOutline"
+                    android:lines="2"
+                    android:gravity="center"/>
 
                 <view
                     android:id="@+id/tunerScale"

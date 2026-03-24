@@ -171,6 +171,7 @@ class MainActivity : AppCompatActivity() {
     private fun resetToChromatic() {
         pitchHistory.clear()
         currentTuning = null
+        isPresetMode = false
         binding.statusText.text = getString(R.string.mode_chromatic)
         updateBackgroundStyled(getThemeColor(com.google.android.material.R.attr.colorSurface), false)
     }
@@ -309,7 +310,7 @@ class MainActivity : AppCompatActivity() {
         val isPerfect = abs(cents) < CENTS_THRESHOLD
 
         // Формируем строку статуса: "Частота: 440.0 Гц"
-        val status = getString(R.string.pitch_detected, String.format(Locale.US, "%.1f", hz))
+        val status = "${getString(R.string.pitch_detected, String.format(Locale.US, "%.1f", hz))}\n "
 
         binding.tunerScale.setCents(cents)
         applyTuningVisuals(isPerfect, noteName, status)
@@ -331,11 +332,15 @@ class MainActivity : AppCompatActivity() {
         val strNum = if (strIdx != -1) (tuning.notes.size - strIdx) else 0
         val noteName = "${MusicUtils.noteNames[((target % 12) + 12) % 12]}${target / 12 - 1}"
 
+        val tuningName = tuning.name
+        val strInfo = getString(R.string.string_number, strNum) // "1-я"
+
+        // Формируем красивые 2 строки
         val status = if (isPerfect) {
-            "${getString(R.string.string_number, strNum)}: ${getString(R.string.perfect)}"
+            "$tuningName\n$strInfo: ${getString(R.string.perfect)}"
         } else {
             val direction = if (cents > 0) getString(R.string.too_high) else getString(R.string.too_low)
-            "${getString(R.string.string_number, strNum)}: $direction\n${String.format(Locale.US, "%.1f Hz", hz)}"
+            "$tuningName ($strInfo: $direction)\n${String.format(Locale.US, "%.1f Hz", hz)}"
         }
 
         binding.tunerScale.setCents(cents)
@@ -504,6 +509,7 @@ class MainActivity : AppCompatActivity() {
 
     // --- Диалоги ---
 
+    @SuppressLint("SetTextI18n")
     private fun showPresetsDialog() {
         val presetNames = Tunings.all.map { it.name }.toTypedArray()
         MaterialAlertDialogBuilder(this)
@@ -513,7 +519,8 @@ class MainActivity : AppCompatActivity() {
 
                 currentTuning = selectedTuning
                 isPresetMode = true
-                binding.statusText.text = currentTuning?.name
+
+                binding.statusText.text = "${selectedTuning.name}\n${getString(R.string.status_listening)}"
                 updateModeButtonsUI()
             }
             .setOnCancelListener { updateModeButtonsUI() }
@@ -756,6 +763,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @SuppressLint("SetTextI18n")
     private fun resetTunerVisuals() {
         val surfaceColor = MaterialColors.getColor(binding.rootLayout, com.google.android.material.R.attr.colorSurface)
         binding.rootLayout.animateBackgroundColor(surfaceColor)
@@ -767,11 +775,11 @@ class MainActivity : AppCompatActivity() {
         binding.statusText.setTextColor(colorOutline)
 
         binding.tunerScale.setCents(0f)
+        binding.noteText.text = getString(R.string.symbol_dash)
+
         if (isPresetMode) {
-            binding.noteText.text = getString(R.string.symbol_dash)
-            binding.statusText.text = currentTuning?.name + "\n"
+            binding.statusText.text = currentTuning!!.name
         } else {
-            binding.noteText.text = getString(R.string.symbol_dash)
             binding.statusText.text = getString(R.string.status_listening)
         }
     }
