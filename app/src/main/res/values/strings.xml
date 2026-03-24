@@ -49,8 +49,10 @@
     <string name="default_note" translatable="false">A4</string>
 
     <string name="tuner_sensitivity">Чувствительность микрофона</string>
-    <string name="tuner_sensitivity_max">Выше</string>
-    <string name="tuner_sensitivity_min">Ниже</string>
+    <string name="mic_test">Тест микрофона</string>
+    <string name="sensitivity_high">Высокая</string>
+    <string name="sensitivity_medium">Средняя</string>
+    <string name="sensitivity_low">Низкая</string>
     <string name="theme_title">Тема оформления</string>
     <string name="theme_light">Светлая</string>
     <string name="theme_dark">Темная</string>
@@ -59,7 +61,8 @@
     <string name="about_title">О приложении</string>
     <string name="menu_settings">Настройки</string>
     <string name="about_message">Strings — Тюнер, Метроном и Генератор тона\n\nВерсия: %s\n\nРазработано с любовью для музыкантов.</string>
-    <string name="symbol_dash" translatable="false">—</string>
+    <string name="symbol_dash" translatable="false">——</string>
     <string name="note_word">Нота</string>
     <string name="octave_word">Октава</string>
+    <string name="generator_enter_freq">Введите желаемую частоту</string>
 </resources>

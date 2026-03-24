@@ -1,99 +1,95 @@
 package com.eduashi.strings
 
-import android.annotation.SuppressLint
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
-import org.jtransforms.fft.FloatFFT_1D
 import kotlin.math.sqrt
 
-class AudioAnalyzer(private val onFrequencyDetected: (Float) -> Unit) {
+class AudioAnalyzer(private val onFrequencyDetected: (Float) -> Unit,
+                    private val onVolumeChanged: (Double) -> Unit) {
 
     private val sampleRate = 44100
-    private val bufferSize = 4096 // Увеличим для лучшего разрешения на низких частотах
+    private val targetSampleRate = 22050
+    private val rawBufferSize = 4096
+    private val processedBufferSize = 2048
+    @Volatile
     private var isRunning = false
-    private val fft = FloatFFT_1D(bufferSize.toLong())
 
-    // Настройка чувствительности (SNR)
-    // 8.0 — золотая середина. Выше — строже, ниже — ловит больше шума.
-    private val confidenceMultiplier = 8.0f
-    var amplitudeThreshold = 145 // Порог "тишины". Подбери под свой микрофон (500-2000)
+    private val mpmDetector = MpmDetector(processedBufferSize, targetSampleRate)
 
-    @SuppressLint("MissingPermission")
+    var amplitudeThreshold = 145
+    private var lastSample = 0f
+
     fun start() {
+        lastSample = 0f
+        if (isRunning) return // ЕСЛИ УЖЕ ЗАПУЩЕН — НИЧЕГО НЕ ДЕЛАЕМ
         isRunning = true
         Thread {
-            val audioRecord = AudioRecord(
-                MediaRecorder.AudioSource.MIC,
-                sampleRate,
-                AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_PCM_16BIT,
-                bufferSize * 2
-            )
+            try {
+                val audioRecord = AudioRecord(
+                    MediaRecorder.AudioSource.VOICE_RECOGNITION,
+                    sampleRate,
+                    AudioFormat.CHANNEL_IN_MONO,
+                    AudioFormat.ENCODING_PCM_16BIT,
+                    rawBufferSize * 2
+                )
 
-            val buffer = ShortArray(bufferSize)
-            val fftBuffer = FloatArray(bufferSize * 2)
-
-            audioRecord.startRecording()
-
-            while (isRunning) {
-                val read = audioRecord.read(buffer, 0, bufferSize)
-                if (read > 0) {
-                    // 1. Считаем среднюю громкость (RMS)
-                    var sumSum = 0.0
-                    for (s in buffer) sumSum += s.toDouble() * s
-                    val rms = sqrt(sumSum / read)
-
-                    // 2. Если в комнате слишком тихо — вообще не нагружаем FFT
-                    if (rms < amplitudeThreshold) {
-                        onFrequencyDetected(-1f)
-                        continue
-                    }
-                    // 3. Если громко — делаем FFT как раньше
-                    for (i in 0 until bufferSize) fftBuffer[i] = buffer[i].toFloat()
-                    fft.realForward(fftBuffer)
-                    val frequency = calculateDominantFrequency(fftBuffer)
-                    onFrequencyDetected(frequency)
+                if (audioRecord.state != AudioRecord.STATE_INITIALIZED) {
+                    isRunning = false
+                    return@Thread
                 }
+
+                val rawBuffer = ShortArray(rawBufferSize)
+                val downsampledBuffer = FloatArray(processedBufferSize)
+                audioRecord.startRecording()
+
+                while (isRunning) {
+                    val read = audioRecord.read(rawBuffer, 0, rawBufferSize)
+                    if (read == rawBufferSize) {
+                        var sumSum = 0.0
+                        for (s in rawBuffer) sumSum += s.toDouble() * s
+                        val rms = sqrt(sumSum / rawBufferSize)
+
+                        onVolumeChanged(rms)
+
+                        // Если звук ниже порога — шлем -1 (для тюнера это "тишина")
+                        if (rms < amplitudeThreshold) {
+                            onFrequencyDetected(-1f)
+                            continue
+                        }
+
+                        // ... остальной код (FFT и MPM) без изменений ...
+                        val floatRaw = FloatArray(rawBufferSize)
+                        for (i in 0 until rawBufferSize) floatRaw[i] = rawBuffer[i] / 32768f
+                        val filtered = applyLowPassFilter(floatRaw)
+                        for (i in 0 until processedBufferSize) downsampledBuffer[i] = filtered[i * 2]
+
+                        val pitch = mpmDetector.detectPitch(downsampledBuffer)
+                        onFrequencyDetected(pitch)
+                    }
+                }
+                audioRecord.stop()
+                audioRecord.release()
+            } catch (e: SecurityException) {
+                e.printStackTrace()
+                isRunning = false
+            } catch (e: Exception) {
+                e.printStackTrace()
+                isRunning = false
             }
-            audioRecord.stop()
-            audioRecord.release()
         }.start()
-    }
-
-    private fun calculateDominantFrequency(fftData: FloatArray): Float {
-        var maxMagnitude = -1f
-        var maxIndex = -1
-        var sumMagnitude = 0f
-
-        // Вычисляем магнитуды (амплитуды) для каждой корзины (bin)
-        // В JTransforms результат лежит как [re, im, re, im...]
-        for (i in 0 until bufferSize / 2) {
-            val re = fftData[2 * i]
-            val im = fftData[2 * i + 1]
-            val magnitude = sqrt(re * re + im * im)
-
-            sumMagnitude += magnitude
-
-            if (magnitude > maxMagnitude) {
-                maxMagnitude = magnitude
-                maxIndex = i
-            }
-        }
-
-        val averageMagnitude = sumMagnitude / (bufferSize / 2)
-
-        // --- ФИЛЬТР ДОСТОВЕРНОСТИ ---
-        // Проверяем: наш пик должен быть значительно выше среднего уровня шума
-        if (maxMagnitude < averageMagnitude * confidenceMultiplier) {
-            return -1.0f // Слишком много шума или тишина
-        }
-
-        // Переводим индекс корзины в герцы
-        return maxIndex.toFloat() * sampleRate / bufferSize
     }
 
     fun stop() {
         isRunning = false
+    }
+
+    private fun applyLowPassFilter(input: FloatArray): FloatArray {
+        val LOW_PASS_FILTER_ALPHA = 0.25f //0.5f
+        for (i in input.indices) {
+            input[i] = lastSample + LOW_PASS_FILTER_ALPHA * (input[i] - lastSample)
+            lastSample = input[i]
+        }
+        return input
     }
 }

@@ -12,17 +12,18 @@ android {
 
     defaultConfig {
         applicationId = "com.eduashi.strings"
-        minSdk = 24
+        minSdk = 30
         targetSdk = 36
-        versionCode = 20
-        versionName = "2.0"
+        versionCode = 21
+        versionName = "2.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

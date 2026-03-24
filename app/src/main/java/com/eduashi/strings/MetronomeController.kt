@@ -6,8 +6,11 @@ class MetronomeController(
 
     var bpm = 120
         set(value) {
-            field = value.coerceIn(30, 300) // Разрешаем от 30 до 300
-            onBpmChanged(field)
+            val validatedBpm = value.coerceIn(30, 300)
+            field = validatedBpm
+
+            engine.bpm = validatedBpm
+            onBpmChanged(validatedBpm)
             if (engine.isRunning) restart()
         }
 
@@ -27,7 +30,12 @@ class MetronomeController(
     )
 
     fun toggle() {
-        if (engine.isRunning) engine.stop() else engine.start()
+        if (engine.isRunning) {
+            engine.stop()
+        } else {
+            engine.bpm = bpm
+            engine.start()
+        }
     }
 
     fun isRunning() = engine.isRunning
@@ -42,8 +50,14 @@ class MetronomeController(
 
     fun handleTap() {
         val currentTime = System.currentTimeMillis()
+
+        if (tapTimes.isNotEmpty() && currentTime - tapTimes.last() > 2000) {
+            tapTimes.clear()
+        }
+
         tapTimes.add(currentTime)
-        if (tapTimes.size > 4) tapTimes.removeAt(0)
+
+        if (tapTimes.size > 5) tapTimes.removeAt(0)
 
         if (tapTimes.size >= 2) {
             val intervals = mutableListOf<Long>()
@@ -51,7 +65,9 @@ class MetronomeController(
                 intervals.add(tapTimes[i] - tapTimes[i - 1])
             }
             val avg = intervals.average()
-            bpm = (60000 / avg).toInt()
+
+            val newBpm = (60000 / avg).toInt().coerceIn(30, 300)
+            bpm = newBpm
         }
     }
 
@@ -59,12 +75,10 @@ class MetronomeController(
         val selected = timeSignatures[position]
         val parts = selected.split("/")
         val beats = parts[0].toInt()
-        val noteValue = parts[1].toInt() // Нижнее число: 4 или 8
+        val noteValue = parts[1].toInt()
 
         beatsPerMeasure = beats
 
-        // Если знаменатель 8, мы ускоряем движок в 2 раза,
-        // чтобы "клики" соответствовали восьмым нотам
         engine.multiplier = if (noteValue == 8) 2.0 else 1.0
 
         if (engine.isRunning) restart()

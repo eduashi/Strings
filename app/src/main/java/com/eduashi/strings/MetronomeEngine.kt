@@ -1,22 +1,50 @@
 package com.eduashi.strings
 
+import android.media.AudioAttributes
 import android.media.AudioFormat
-import android.media.AudioManager
 import android.media.AudioTrack
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
+import kotlin.math.exp
+import kotlin.math.sin
 
 class MetronomeEngine(var bpm: Int, var beatsPerMeasure: Int, val onTick: (Int) -> Unit) {
     private var executor: ScheduledThreadPoolExecutor? = null
     private var currentBeat = 0
     var isRunning = false
 
-    // Генерация звука "клика" в памяти
     private val sampleRate = 44100
-    private val tickBuffer: ShortArray = generateClick(800.0)    // Обычный удар
-    private val accentBuffer: ShortArray = generateClick(1200.0) // Акцент (первая доля)
+    private var tickTrack: AudioTrack? = null
+    private var accentTrack: AudioTrack? = null
 
-    var multiplier: Double = 1.0 // По умолчанию 1.0 для четвертей
+    var multiplier: Double = 1.0
+
+    init {
+        // Подготавливаем треки заранее один раз
+        val  TICK_FREQ = generateClick(800.0)
+        val ACCENT_FREQ = generateClick(1200.0)
+
+        tickTrack = createStaticTrack(TICK_FREQ)
+        accentTrack = createStaticTrack(ACCENT_FREQ)
+    }
+
+    private fun createStaticTrack(buffer: ShortArray): AudioTrack {
+        return AudioTrack.Builder()
+            .setAudioAttributes(AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build())
+            .setAudioFormat(AudioFormat.Builder()
+                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                .setSampleRate(sampleRate)
+                .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                .build())
+            .setBufferSizeInBytes(buffer.size * 2)
+            .setTransferMode(AudioTrack.MODE_STATIC)
+            .build().apply {
+                write(buffer, 0, buffer.size)
+            }
+    }
 
     fun start() {
         if (isRunning) return
@@ -26,49 +54,43 @@ class MetronomeEngine(var bpm: Int, var beatsPerMeasure: Int, val onTick: (Int) 
             removeOnCancelPolicy = true
         }
 
-        val interval = (60000L / (bpm * multiplier)).toLong()
+        val intervalNanos = (60_000_000_000.0 / (bpm * multiplier)).toLong()
+
+        // Используем scheduleAtFixedRate для строгого соблюдения темпа
         executor?.scheduleWithFixedDelay({
             currentBeat = (currentBeat % beatsPerMeasure) + 1
 
-            // Играем звук (в отдельном потоке, чтобы не тормозить таймер)
-            playClick(if (currentBeat == 1) accentBuffer else tickBuffer)
+            // Проигрываем заранее созданный трек
+            if (currentBeat == 1) {
+                accentTrack?.stop()
+                accentTrack?.reloadStaticData()
+                accentTrack?.play()
+            } else {
+                tickTrack?.stop()
+                tickTrack?.reloadStaticData()
+                tickTrack?.play()
+            }
 
-            // Обновляем UI (мигание шкалы)
             onTick(currentBeat)
-        }, 0, interval, TimeUnit.MILLISECONDS)
+        }, 0, intervalNanos, TimeUnit.NANOSECONDS)
     }
 
     fun stop() {
         isRunning = false
         executor?.shutdownNow()
         executor = null
+        tickTrack?.pause()
+        accentTrack?.pause()
     }
 
     private fun generateClick(freq: Double): ShortArray {
-        val duration = 0.02 // 20 мс - очень короткий щелчок
+        val duration = 0.02
         val numSamples = (duration * sampleRate).toInt()
         val buffer = ShortArray(numSamples)
         for (i in 0 until numSamples) {
-            // Затухающая синусоида для мягкого клика
-            val envelope = Math.exp(-i.toDouble() / (numSamples / 3))
-            buffer[i] = (Math.sin(2.0 * Math.PI * i / (sampleRate / freq)) * Short.MAX_VALUE * envelope).toInt().toShort()
+            val envelope = exp(-i.toDouble() / (numSamples / 3))
+            buffer[i] = (sin(2.0 * Math.PI * i / (sampleRate / freq)) * Short.MAX_VALUE * envelope).toInt().toShort()
         }
         return buffer
-    }
-
-    private fun playClick(buffer: ShortArray) {
-        val track = AudioTrack(
-            AudioManager.STREAM_MUSIC, sampleRate,
-            AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT,
-            buffer.size * 2, AudioTrack.MODE_STATIC
-        )
-        track.write(buffer, 0, buffer.size)
-        track.play()
-        // Освобождаем ресурсы после проигрывания
-        track.setNotificationMarkerPosition(buffer.size)
-        track.setPlaybackPositionUpdateListener(object : AudioTrack.OnPlaybackPositionUpdateListener {
-            override fun onPeriodicNotification(t: AudioTrack?) {}
-            override fun onMarkerReached(t: AudioTrack?) { t?.release() }
-        })
     }
 }
